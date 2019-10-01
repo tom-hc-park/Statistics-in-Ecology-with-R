@@ -20,8 +20,8 @@ names(df_may)
 names(df_sep)
 names(df_nov)
 
-df_zero <- read.csv("../data/oyster_zeropoint.csv")
-
+df_zero <- read.csv("../data/growth_data_zero.csv")
+names(df_zero)
 temp <- rbind.fill(df_zero,df_march,df_may,df_july,df_sep,df_nov)
 
 names(temp)
