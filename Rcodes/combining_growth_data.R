@@ -6,6 +6,7 @@ df_july<- read.csv(file='../data/growth_data_july.csv')
 df_nov<- read.csv(file='../data/growth_data_nov.csv')
 df_zero <- read.csv("../data/growth_data_zero.csv")
 
+
 # install packages
 if (!require("plyr")) install.packages(plyr)
 if (!require("dplyr")) install.packages(dplyr)
@@ -17,10 +18,10 @@ tidydata <- function(df) {
   if (!"wet_mass" %in% names(df)) {
     df$wet_mass = tryCatch(
       {
-        unlist(df %>% select(whole_mass))
+        (df %>% pull(whole_mass))
       }, error = function(e) {
         print(paste("whole mass doesn't exist:", e))
-        unlist(df %>% select(whole_oyster))
+        (df %>% pull(whole_oyster))
       }, finally = {
         print("renaming as wet_mass done")
       })
@@ -29,7 +30,7 @@ tidydata <- function(df) {
   if (!"dry_whole" %in% names(df)) {
     df$dry_whole = tryCatch(
       {
-        unlist(df %>% select(whole_dry))
+        df %>% pull(whole_dry)
       }, error = function(e) {
         print(paste("whole dry doesn't exist:", e))
       }, finally = {
@@ -38,8 +39,11 @@ tidydata <- function(df) {
   }
   df <- df %>% select(site, b_r, bag, outplant_time, shell_length, 
                       wet_mass, dry_whole, dry_tissue)
+  # adding the data frame name as a variable 
   return(df)
 }
+
+
 
 # apply functions to data sets 
 march <- tidydata(df_march)
@@ -48,6 +52,8 @@ may <- tidydata(df_may)
 sep <- tidydata(df_sep)
 nov <- tidydata(df_nov)
 
+names(df_march)
+temp <- df_march %>% pull(dry_whole)
 
 # combine data
 df_full <- rbind.fill(march, july, may, sep, nov)
@@ -57,7 +63,10 @@ names(df_full)
 
 
 # validation
+# total number of rows
 nrow(df_full) ==  nrow(df_july) +nrow(df_march) +nrow(df_may) +nrow(df_sep) +nrow(df_nov)
-# we can see no observation is missing.
+# tow number of missing values 
+sum(is.na(df_full)) == sum(is.na(july)) +sum(is.na(march)) +sum(is.na(may)) +sum(is.na(sep)) +sum(is.na(nov)) 
+
 
 write.csv(df_full,file = "../data/full_data.csv")
