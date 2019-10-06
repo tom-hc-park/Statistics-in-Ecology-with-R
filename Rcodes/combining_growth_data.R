@@ -6,6 +6,13 @@ df_july<- read.csv(file='../data/growth_data_july.csv')
 df_nov<- read.csv(file='../data/growth_data_nov.csv')
 df_zero <- read.csv("../data/growth_data_zero.csv")
 
+# add source variable
+df_sep$month <- 9
+df_march$month <- 3
+df_may$month <- 5
+df_july$month <- 7
+df_nov$month <- 11
+df_zero$month <- 0 # what is the month of zero data point? 
 
 # install packages
 if (!require("plyr")) install.packages(plyr)
@@ -38,7 +45,7 @@ tidydata <- function(df) {
       })
   }
   df <- df %>% select(site, b_r, bag, outplant_time, shell_length, 
-                      wet_mass, dry_whole, dry_tissue)
+                      wet_mass, dry_whole, dry_tissue,month)
   # adding the data frame name as a variable 
   return(df)
 }

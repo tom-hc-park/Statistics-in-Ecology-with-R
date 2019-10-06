@@ -1,5 +1,16 @@
 # STAT506H
 
+## Process
+1. combining the growth data seems to be done. 
+2. For mortality, salinity_temp, I am having some difficulties of interpreting the time/week variable so that I 
+stopped at here. I am hoping to combine the growth data and the two data sets for imputation since our growth data has 'month' information, thus the info from the data could help our imputing of salinity and temperature.
+3. The EDA from your code seems alright :) but I was a little bit not sure about the duplicating same data sets and put them into each site. duplicated data could make n larger than actual number, hence it could lead a wrong p value. (it may lead nonsignificant result to look like significant). So I was wondering how about just randomly split the data from 'zero.csv' and randomly split them into different locations. 
+
+## Todo
+1. convert date_time variable from salinity_temperature.csv into standard data time
+2. convert weeks variable from mort_data.csv into standard data time
+
+
 ## Data description
 
 You can find the salinity and temperature data in the salinity_temperature.csv file for each site (A, B, C, D, and E) and each subsite within site (beach, raft).

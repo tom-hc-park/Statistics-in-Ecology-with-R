@@ -1,19 +1,19 @@
 library(tidyverse)
 
-setwd("/Users/Amelia/Documents/UBC/R_projects/STAT506H")
+
 
 # read in data
-growth_0 <- read_csv("growth_data_zero.csv")
+growth_0 <- read.csv("../data/growth_data_zero.csv")
 
-growth_may <- read_csv("growth_data_may.csv")
+growth_may <- read.csv("../data/growth_data_may.csv")
 
-growth_july <- read_csv("growth_data_july.csv")
+growth_july <- read.csv("../data/growth_data_july.csv")
 
-growth_sept <- read_csv("growth_data_sept.csv")
+growth_sept <- read.csv("../data/growth_data_sept.csv")
 
-growth_nov <- read_csv("growth_data_nov.csv")
+growth_nov <- read.csv("../data/growth_data_nov.csv")
 
-growth_1 <- read_csv("growth_data_march.csv")
+growth_1 <- read.csv("../data/growth_data_march.csv")
 
 # concatenate the same data for fifty oysters into a longer data frame
 for (i in 1:6){
@@ -25,9 +25,17 @@ for (i in 1:6){
 growth_0 <- growth_0 %>% 
   slice(1:2500)
 
+#
+hist(growth_0$oyster_number)
+#
+
+
+
 # rename the variable outplant time to make it consistent for later merging
+names(growth_0)
 growth_0 <- growth_0 %>% 
-  rename(outplant_time = "outplant time")
+  rename(outplant_time = "outplant.time")
+names(growth_0)
 
 # create a character vector for site
 site <- c(rep("A", times = 500), rep("B", times = 500),
@@ -114,7 +122,7 @@ growth_plot
 # this is just me playing with the salinity temperature data to see how often
 # salinity and temperature conditions were stressful for oysters
 
-enviro <- read_csv("salinity_temperature.csv")
+enviro <- read.csv("../data/salinity_temperature.csv")
 
 low_sal <- enviro %>%
   filter(b_r == "r" & sal <= 20)
