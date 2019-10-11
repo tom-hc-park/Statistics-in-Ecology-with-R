@@ -88,7 +88,7 @@ degree_hours_above <- function(t, d, dh, c){
 }
 
 
-degree_hours_below <- function(t, d, dh, c, e){
+degree_hours_below <- function(t, d, dh, c){
   for (i in 1:length(d)) {
     if (d[i] <= t) {
       if (i == 1) {
