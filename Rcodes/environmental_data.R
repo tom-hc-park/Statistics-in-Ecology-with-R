@@ -59,29 +59,58 @@ sal_temp_mar18 <- sal_temp %>%
 
 # next step is to calculate degree hours (cumulative salinity/temperature stress) for each time period
 
-# this function is still a work in progress. not super good with loops, so still trying to figure it out...
-sal_temp_dh <- sal_temp %>% 
-  group_by(site, b_r, date) %>%
-  mutate(dh = for (i in length(hour)) {
-    if (temp[i] >= 29) {
-      if (i = 1){
-        dh = 1
-        c = 1
-      } else{
-        if (temp[i-1] >= 29) {
-          c = c + 1
-          n = floor(temp[i-29])
-          dh = dh + n + 1 + c
-        } else{
-          dh = dh 
-          c = 0
-        }
-      }
-   }
+# create function for degree hours above and below a certain threshold
 
-  dh_s = for i in length(sal){
-    if sal <= 20, dh_s = dh_s + 1
-  })
+# t is the threshold value, d = temperature data, dh = initial degree hours (0), 
+# c = initial counter (0)
+degree_hours_above <- function(t, d, dh, c){
+  for (i in 1:length(d)) {
+    if (d[i] >= t) {
+      if (i == 1) {
+        n = floor(d[i] - t) + 1
+        dh = dh + n
+        c = 1
+      } else if (d[i-1] >= t){
+          n = floor(d[i] - t) + 1
+          dh = dh + c + n
+          c = c + 1
+        } else {
+          n = floor(d[i] - t) + 1
+          dh = dh + n
+          c = 1
+        } 
+    } else {
+        dh = dh
+        c = 0
+    }
+  }
+  return(dh)
+}
+
+
+degree_hours_below <- function(t, d, dh, c, e){
+  for (i in 1:length(d)) {
+    if (d[i] <= t) {
+      if (i == 1) {
+        n = floor(t - d[i]) + 1
+        dh = dh + n
+        c = 1
+      } else if (d[i-1] <= t){
+        n = floor(t - d[i]) + 1 
+        dh = dh + c + n
+        c = c + 1
+      } else {
+        n = floor(t - d[i]) + 1
+        dh = dh + n
+        c = 1
+      } 
+    } else {
+      dh = dh
+      c = 0
+    }
+  }
+  return(dh)
+}
 
 # separate data by time point
 
