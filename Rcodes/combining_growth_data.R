@@ -7,12 +7,12 @@ df_nov<- read.csv(file='../data/growth_data_nov.csv')
 df_zero <- read.csv("../data/growth_data_zero.csv")
 
 # add source variable
-df_sep$month <- 9
-df_march$month <- 3
-df_may$month <- 5
-df_july$month <- 7
-df_nov$month <- 11
-df_zero$month <- 0 # what is the month of zero data point? 
+df_sep$month <- 6
+df_march$month <- 12
+df_may$month <- 2
+df_july$month <- 4
+df_nov$month <- 8
+df_zero$month <- 0 
 
 # install packages
 if (!require("plyr")) install.packages(plyr)
@@ -68,12 +68,10 @@ df_full <- rbind.fill(march, july, may, sep, nov)
 # check names 
 names(df_full)
 
-
 # validation
 # total number of rows
 nrow(df_full) ==  nrow(df_july) +nrow(df_march) +nrow(df_may) +nrow(df_sep) +nrow(df_nov)
 # tow number of missing values 
 sum(is.na(df_full)) == sum(is.na(july)) +sum(is.na(march)) +sum(is.na(may)) +sum(is.na(sep)) +sum(is.na(nov)) 
-
 
 write.csv(df_full,file = "../data/full_data.csv")
