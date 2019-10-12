@@ -184,9 +184,9 @@ sal_temp_mar18 <- sal_temp_outplant %>%
 sal_temp_mar18_2 <- sal_temp_ddh %>% 
   filter(outplant_time > 31) %>% 
   group_by(site, b_r) %>% 
-  dplyr::summarise(av_dmax_t <- mean(dmax_t),
-                   av_dmin_t <- mean(dmin_t),
-                   av_dmin_s <- mean(dmin_s),
+  dplyr::summarise(av_dmax_t = mean(dmax_t),
+                   av_dmin_t = mean(dmin_t),
+                   av_dmin_s = mean(dmin_s),
                    tot_dh_t = sum(dh_t),
                    tot_dh_s = sum(dh_s))
 

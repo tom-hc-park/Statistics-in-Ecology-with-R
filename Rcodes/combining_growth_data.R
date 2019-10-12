@@ -75,3 +75,5 @@ nrow(df_full) ==  nrow(df_july) +nrow(df_march) +nrow(df_may) +nrow(df_sep) +nro
 sum(is.na(df_full)) == sum(is.na(july)) +sum(is.na(march)) +sum(is.na(may)) +sum(is.na(sep)) +sum(is.na(nov)) 
 
 write.csv(df_full,file = "../data/full_data.csv")
+
+levels(as.factor(df_full$month))
