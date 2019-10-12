@@ -239,10 +239,7 @@ response_summary <- sal_temp_may17_full %>%
   full_join(sal_temp_nov17_full) %>% 
   full_join(sal_temp_mar18_full)
 
-# there are implicit NAs due to missing data between november and 
 # now we just need to make a data frame for the change in growth between datapoints
 # for the response, and we can join and model these data
 
 write_csv(response_summary, "../data/summary.csv")
-
-# apparently I haven't actually added the salinity and temperature data for winter. I will do that soon!
