@@ -20,73 +20,36 @@ sal_temp <- sal_temp %>%
 ## convert date to preferred format 
 sal_temp$date <- as.Date(sal_temp$date, "%Y-%m-%d")
 
-# summarize the average hourly temperature and salinity
-sal_temp_hours <- sal_temp %>% 
-  group_by(site, b_r, date, hour) %>% 
-  dplyr::summarize(temp_av = mean(temp, na.rm = TRUE), sal_av = mean(sal, na.rm = TRUE))
-
-sal_temp_hours$site <- as.factor(sal_temp_hours$site)
-sal_temp_hours$b_r <- as.factor(sal_temp_hours$b_r)
-sal_temp_hours$date <- as.factor(sal_temp_hours$date)
-
 # next step is to calculate degree hours (cumulative salinity/temperature stress) for each time period
 
 # create function for degree hours above and below a certain threshold
 
 # t is the threshold value, d = temperature data, 
-# within function, dh = cumulative degree hours, c = counter for consecutive dh
+# dh = cumulative degree hours
 
 degree_hours_above <- function(t, d, na.rm = TRUE){
   dh = 0
-  c = 0
   for (i in 1:length(d)) {
     if (d[i] >= t) {
-      if (i == 1) {
-        n = floor(d[i] - t) + 1
-        dh = dh + n
-        c = 1
-      } else if (d[i-1] >= t){
-          n = floor(d[i] - t) + 1
-          dh = dh + c + n
-          c = c + 1
-        } else {
-          n = floor(d[i] - t) + 1
-          dh = dh + n
-          c = 1
-        } 
+      dh = dh + (d[i] - t) # if temperature is above threshold, then add that amount to the running total
     } else {
         dh = dh
-        c = 0
     }
   }
-  return(dh)
+  return(dh/4) # data loggers are in 15 minute increments, so divide by 4 to make hours.
 }
 
 
 degree_hours_below <- function(t, d, na.rm = TRUE){
   dh = 0
-  c = 0
   for (i in 1:length(d)) {
     if (d[i] <= t) {
-      if (i == 1) {
-        n = floor(t - d[i]) + 1
-        dh = dh + n
-        c = 1
-      } else if (d[i-1] <= t){
-        n = floor(t - d[i]) + 1 
-        dh = dh + c + n
-        c = c + 1
-      } else {
-        n = floor(t - d[i]) + 1
-        dh = dh + n
-        c = 1
-      } 
+      dh = dh + (t - d[i])
     } else {
       dh = dh
-      c = 0
     }
   }
-  return(dh)
+  return(dh/4)
 }
 
 # calculate response metrics of interest for each outplant period
@@ -96,16 +59,16 @@ degree_hours_below <- function(t, d, na.rm = TRUE){
 
 #daily degree/ppt hours for each beach or raft subsite using written functions
 
-sal_temp_dh <- sal_temp_hours %>% 
-  group_by(site, b_r, date) %>% 
-  na.omit() %>% 
-  dplyr::summarize(dh_t = degree_hours_above(29, temp_av),
-                   dh_s = degree_hours_below(20, sal_av))
-
 # convert grouping variables to factors
 sal_temp$site <- as.factor(sal_temp$site)
 sal_temp$b_r <- as.factor(sal_temp$b_r)
 sal_temp$date <- as.factor(sal_temp$date)
+
+sal_temp_dh <- sal_temp %>% 
+  group_by(site, b_r, date) %>% 
+  na.omit() %>% 
+  dplyr::summarize(dh_t = degree_hours_above(29, temp),
+                   dh_s = degree_hours_below(20, sal))
 
 sal_temp_daily <- sal_temp %>%
   group_by(site, b_r, date) %>% 
