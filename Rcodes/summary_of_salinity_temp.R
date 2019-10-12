@@ -1,24 +1,13 @@
 if (!require("lubridate")) install.packages(lubridate)
 if (!require("tidyverse")) install.packages(tidyverse)
-
+if (!require("readr")) install.packages(readr)
 # load packages
 library(tidyverse)
 library(lubridate)
-
+library(readr)
 ## look at data in salinity/temperature data file
-sal_temp <- read_csv("../data/salinity_temperature.csv")
+sal_temp <- read_csv("../data/date_transformed_salinity_temperature.csv")
 
-## convert date into proper format readable by R
-sal_temp$time <- as.POSIXct(sal_temp$date_time*24*3600 + as.POSIXct("1899-12-29 23:00") )
-
-## parse out date, time, and hour into separate columns
-sal_temp <- sal_temp %>% 
-  mutate(hour = as.POSIXlt(time)$hour) %>% 
-  separate(col = "time", into = c("date","clocktime"),sep=" ", remove = TRUE) %>% 
-  select(-date_time)
-
-## convert date to preferred format 
-sal_temp$date <- as.Date(sal_temp$date, "%Y-%m-%d")
 
 # next step is to calculate degree hours (cumulative salinity/temperature stress) for each time period
 
