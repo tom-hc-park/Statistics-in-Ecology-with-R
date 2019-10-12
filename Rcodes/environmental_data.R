@@ -101,9 +101,9 @@ sal_temp_may17 <- sal_temp_outplant %>%
 sal_temp_may17_2 <- sal_temp_ddh %>% 
   filter(outplant_time <= 8.1) %>% 
   group_by(site, b_r) %>% 
-  dplyr::summarise(av_dmax_t <- mean(dmax_t),
-                   av_dmin_t <- mean(dmin_t),
-                   av_dmin_s <- mean(dmin_s),
+  dplyr::summarise(av_dmax_t = mean(dmax_t),
+                   av_dmin_t = mean(dmin_t),
+                   av_dmin_s = mean(dmin_s),
                    tot_dh_t = sum(dh_t),
                    tot_dh_s = sum(dh_s))
 
@@ -121,9 +121,9 @@ sal_temp_july17 <- sal_temp_outplant %>%
 sal_temp_july17_2 <- sal_temp_ddh %>% 
   filter(outplant_time <= 15.9 & outplant_time > 8.1) %>% 
   group_by(site, b_r) %>% 
-  dplyr::summarise(av_dmax_t <- mean(dmax_t),
-                   av_dmin_t <- mean(dmin_t),
-                   av_dmin_s <- mean(dmin_s),
+  dplyr::summarise(av_dmax_t = mean(dmax_t),
+                   av_dmin_t = mean(dmin_t),
+                   av_dmin_s = mean(dmin_s),
                    tot_dh_t = sum(dh_t),
                    tot_dh_s = sum(dh_s))
 
@@ -142,9 +142,9 @@ sal_temp_sept17 <- sal_temp_outplant %>%
 sal_temp_sept17_2 <- sal_temp_ddh %>% 
   filter(outplant_time <= 24.1 & outplant_time > 15.9) %>% 
   group_by(site, b_r) %>% 
-  dplyr::summarise(av_dmax_t <- mean(dmax_t),
-                   av_dmin_t <- mean(dmin_t),
-                   av_dmin_s <- mean(dmin_s),
+  dplyr::summarise(av_dmax_t = mean(dmax_t),
+                   av_dmin_t = mean(dmin_t),
+                   av_dmin_s = mean(dmin_s),
                    tot_dh_t = sum(dh_t),
                    tot_dh_s = sum(dh_s))
 
@@ -163,9 +163,9 @@ sal_temp_nov17 <- sal_temp_outplant %>%
 sal_temp_nov17_2 <- sal_temp_ddh %>% 
   filter(outplant_time <= 31 & outplant_time > 24.1) %>% 
   group_by(site, b_r) %>% 
-  dplyr::summarise(av_dmax_t <- mean(dmax_t),
-                   av_dmin_t <- mean(dmin_t),
-                   av_dmin_s <- mean(dmin_s),
+  dplyr::summarise(av_dmax_t = mean(dmax_t),
+                   av_dmin_t = mean(dmin_t),
+                   av_dmin_s = mean(dmin_s),
                    tot_dh_t = sum(dh_t),
                    tot_dh_s = sum(dh_s))
 
