@@ -57,7 +57,7 @@ oysters_zero <- oysters_zero %>%
   filter(site != "F")
 
 # plot what the real and imputed data look like
-plot(full_df$shell_length ~ 1)
+plot(full_df$shell_length ~ 1, ylim = c(15,35))
 points(oysters_zero$shell_length ~ 1, col = "green")
 
 # write output
