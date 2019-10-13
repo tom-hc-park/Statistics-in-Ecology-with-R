@@ -1,3 +1,17 @@
+
+if (!require("mice")) install.packages("mice", repos="http://cran.r-project.org")
+if (!require("tidyverse")) install.packages("tidyverse")
+if (!require("VIM")) install.packages("VIM")
+if (!require("Amelia")) install.packages("Amelia")
+if (!require("mice")) install.packages("mice", dependencies = TRUE)
+install.packages("broom", "mitml")
+library(mice)
+library(tidyverse)
+
+salt_temp <- read.csv("../data/date_transformed_salinity_temperature.csv")
+mort<- read.csv("../data/mort_data.csv")
+growth <- read.csv("../data/full_data.csv")
+head(salt_temp)
 if (!require("VIM")) install.packages("VIM")
 if (!require("Amelia")) install.packages("Amelia")
 if (!require("mice")) install.packages("mice")
@@ -17,30 +31,41 @@ aggr_st <- aggr(salt_temp, numbers= TRUE, sortVars = TRUE)
 # ~5% of the salinity data is missing and <1% of the temperature data
 
 marginplot(salt_temp[,c("sal","date_time")])
+marginplot(salt_temp[,c("temp","date_time")])
+marginplot(salt_temp[,c("sal","temp")])
 
-# now we try a complete case analysis
+n = nrow(salt_temp)
+plot(salt_temp$date_time, salt_temp$sal)
 
-# first, we need to make the data frame from which to create a model
+# EMB requires multi normal distribuion and MAR assumption.
 
-salt_temp_summary <- read.csv("../data/summary.csv")
+# checking for multinormality
+hist(salt_temp$temp)
+qqnorm(salt_temp$temp)
 
-growth_rate <- read.csv("../data/growth_rate_response.csv")
+qqnorm(salt_temp$sal)
 
-oysters_full <- growth_rate %>% 
-  full_join(salt_temp_summary)
+# temp missing situations
+# programmed it wrong, or data logger missing(lost it)
+# june part, programm was wrong
+# one bag of oyster missing, oysters and the logger missing
 
-head(oysters_full)
+# salt missing situations
+# sand get the detect part, which leads false 0s, or really really low values
+# ex. 25 is proper lower than 10 
 
-oysters_raft <- oysters_full %>% 
-  filter(b_r == "r")
+# more salinity missing 
+# if temp missing, that impies salinity missing 
+# imputing variables can include site,(beach, raft also location)
 
-# need to rescale the predictors, particularly the degree hours
-oysters_rescaled <- oysters_full %>% 
-  mutate(tot_dh_t = (tot_dh_t - mean(tot_dh_t))/10,
-         tot_dh_s = (tot_dh_s - mean(tot_dh_s))/10)
+# temp/salinity ~ time + site + beach/raft
 
-lmer_oysters <- lmer(growth_rate ~ temp_av + sal_av + av_dmax_t + 
-                          av_dmin_t + av_dmin_s + tot_dh_t + tot_dh_s +
-                          outplant_time + (1 | bag/site),
-                        data = oysters_rescaled)
+# EMB worst :transformation needed if we wanna use this 
+# MCMC vs times series 
+# fit(mcmc) vs fit(time series)
 
+# we may have to fit gam because the model assumption violation
+
+# nonlinear regression
+
+# nonparameteric model 

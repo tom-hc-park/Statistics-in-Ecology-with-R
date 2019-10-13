@@ -1,3 +1,5 @@
+if (!require("mice")) install.packages("mice", repos="http://cran.r-project.org")
+if (!require("tidyverse")) install.packages("tidyverse")
 library(mice)
 library(tidyverse)
 
@@ -15,8 +17,8 @@ b_r <- rep(c(rep("b", times = 75), rep("r", times = 75)), times = 5)
 bag <- rep(c(rep("1", times = 15),rep("2", times = 15),
              rep("3", times = 15), rep("4", times = 15),
              rep("5", times = 15)), times = 10)
-
 # create outplant time vector
+
 outplant_time <- rep("0", times = 750)
 
 # empty shell length vector
