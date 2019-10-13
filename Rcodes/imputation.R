@@ -1,6 +1,15 @@
+if (!require("mice")) install.packages("mice", repos="http://cran.r-project.org")
+if (!require("tidyverse")) install.packages("tidyverse")
+if (!require("VIM")) install.packages("VIM")
+if (!require("Amelia")) install.packages("Amelia")
+if (!require("mice")) install.packages("mice", dependencies = TRUE)
+install.packages("broom", "mitml")
+library(mice)
+library(tidyverse)
+
 salt_temp <- read.csv("../data/date_transformed_salinity_temperature.csv")
 mort<- read.csv("../data/mort_data.csv")
-
+growth <- read.csv("../data/full_data.csv")
 head(salt_temp)
 
 head(mort)
