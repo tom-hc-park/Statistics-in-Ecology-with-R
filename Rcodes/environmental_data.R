@@ -1,13 +1,14 @@
 #Script to get CT data summarized
 
+if (!require("tidyverse")) install.packages("tidyverse")
+if (!require("lubridate")) install.packages("lubridate")
 library(tidyverse)
 library(lubridate)
 
 # need to set working directory to proper data folder
 
 ## look at data in edited environmental CT data file
-sal_temp <- read_csv("./full_data.csv")
-
+sal_temp <- read_csv("../data/salinity_temperature.csv")
 ## convert date into proper format readable by R
 sal_temp$time <- as.POSIXct(sal_temp$date_time*24*3600 + as.POSIXct("1899-12-29 23:00") )
 
