@@ -46,5 +46,7 @@ for (i in 1:6) {
   }
 }
 
+growth_rate <- na.omit(growth_rate)
+
 # write up the dataframe
 write_csv(growth_rate, "../data/growth_rate_response.csv")
