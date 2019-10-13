@@ -85,7 +85,7 @@ sal_temp_may17 <- sal_temp_outplant %>%
   filter(outplant_time <= 8.1) %>% 
   group_by(site, b_r) %>% 
   dplyr::summarise(temp_av = mean(temp, na.rm = TRUE),
-                   sal_av = mean(temp, na.rm = TRUE))
+                   sal_av = mean(sal, na.rm = TRUE))
 
 sal_temp_may17_2 <- sal_temp_ddh %>% 
   filter(outplant_time <= 8.1) %>% 
@@ -105,7 +105,7 @@ sal_temp_july17 <- sal_temp_outplant %>%
   filter(outplant_time <= 15.9 & outplant_time > 8.1) %>% 
   group_by(site, b_r) %>% 
   dplyr::summarise(temp_av = mean(temp, na.rm = TRUE),
-                   sal_av = mean(temp, na.rm = TRUE))
+                   sal_av = mean(sal, na.rm = TRUE))
 
 sal_temp_july17_2 <- sal_temp_ddh %>% 
   filter(outplant_time <= 15.9 & outplant_time > 8.1) %>% 
@@ -126,7 +126,7 @@ sal_temp_sept17 <- sal_temp_outplant %>%
   filter(outplant_time <= 24.1 & outplant_time > 15.9) %>% 
   group_by(site, b_r) %>% 
   dplyr::summarise(temp_av = mean(temp, na.rm = TRUE),
-                   sal_av = mean(temp, na.rm = TRUE))
+                   sal_av = mean(sal, na.rm = TRUE))
 
 sal_temp_sept17_2 <- sal_temp_ddh %>% 
   filter(outplant_time <= 24.1 & outplant_time > 15.9) %>% 
@@ -147,7 +147,7 @@ sal_temp_nov17 <- sal_temp_outplant %>%
   filter(outplant_time <= 31 & outplant_time > 24.1) %>% 
   group_by(site, b_r) %>% 
   dplyr::summarise(temp_av = mean(temp, na.rm = TRUE),
-                   sal_av = mean(temp, na.rm = TRUE))
+                   sal_av = mean(sal, na.rm = TRUE))
 
 sal_temp_nov17_2 <- sal_temp_ddh %>% 
   filter(outplant_time <= 31 & outplant_time > 24.1) %>% 
@@ -168,7 +168,7 @@ sal_temp_mar18 <- sal_temp_outplant %>%
   filter(outplant_time > 31) %>% 
   group_by(site, b_r) %>% 
   dplyr::summarise(temp_av = mean(temp, na.rm = TRUE),
-                   sal_av = mean(temp, na.rm = TRUE))
+                   sal_av = mean(sal, na.rm = TRUE))
 
 sal_temp_mar18_2 <- sal_temp_ddh %>% 
   filter(outplant_time > 31) %>% 
