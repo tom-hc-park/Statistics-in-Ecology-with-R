@@ -7,8 +7,9 @@ stopped at here. I am hoping to combine the growth data and the two data sets fo
 3. The EDA from your code seems alright :) but I was a little bit not sure about the duplicating same data sets and put them into each site. duplicated data could make n larger than actual number, hence it could lead a wrong p value. (it may lead nonsignificant result to look like significant). So I was wondering how about just randomly split the data from 'zero.csv' and randomly split them into different locations. 
 
 ## Todo
-1. convert date_time variable from salinity_temperature.csv into standard data time
-2. convert weeks variable from mort_data.csv into standard data time
+1. Create response variable for change in shell length (growth rate)
+2. Generate a good model for complete case analysis
+3. Perform imputation
 
 
 ## Data description
