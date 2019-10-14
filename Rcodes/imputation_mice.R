@@ -24,7 +24,7 @@ summary(df)
 dfM <- mice(df[,c("site", "b_r","temp","sal","hour","date")], m=5, seed=1)
 save(dfM, "../data/mice_imputed_data.RData")
 
-#### please run codes until here and then use 
+#### please run codes until here and then use the dfM for your model fit
 
 
 aggr_st <- aggr(salt_temp, numbers= TRUE, sortVars = TRUE)
