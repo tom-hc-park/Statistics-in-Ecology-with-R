@@ -6,25 +6,75 @@ library(tidyverse)
 
 salt_temp_summary <- read.csv("../data/summary.csv")
 growth_rate <- read.csv("../data/growth_rate_response.csv")
+df_full <- read.csv("../data/full_data.csv")
 
-# create summary of growth rate data 
-growth_rate_summary <- growth_rate %>% 
-  group_by(site, b_r, bag, month, outplant_time) %>% 
-  # make a new column for subsite (e.g. A r for raft at site A)
-  # we will use this for our nested random variable
-  mutate(subsite = paste(site, b_r))
+# create summary of growth rate data (don't need this part)
+#growth_rate_summary <- growth_rate %>% 
+#group_by(site, b_r, bag, month, outplant_time) %>% 
+#dplyr::summarise(av_gr = mean(growth_rate)) %>% 
+# make a new column for subsite (e.g. A r for raft at site A)
+# we will use this for our nested random variable
+#mutate(subsite = paste(site, b_r))
 
 # now unite the oyster response data with the summarized environmental data
-oysters_full <- growth_rate_summary %>% 
-  full_join(salt_temp_summary)
+oysters_full <- growth_rate %>% 
+  full_join(salt_temp_summary) %>% 
+  mutate(subsite = paste(site, b_r))
 
 # growth rate changes non-linearly with time
-plot(av_gr ~ outplant_time, data = oysters_rescaled)
+plot(growth_rate ~ outplant_time, data = oysters_full)
+
+# but can transform it to fix
+plot(growth_rate ~ exp(-1/outplant_time), data = oysters_full)
+
+# create rescaled dataframe
+
+oysters_rescaled <- oysters_full %>% 
+  mutate(outplant_time = exp(-1/outplant_time)*10,
+         tot_dh_t = tot_dh_t - mean(tot_dh_t),
+         tot_dh_s = (tot_dh_s - mean(tot_dh_s))/100)
+head(oysters_rescaled)
+
+# split into raft and beach data
+just_rafts <- oysters_rescaled %>% 
+  filter(b_r == "r")
+
+just_beach <- oysters_rescaled %>% 
+  filter(b_r == "b")
+
+# let's try a linear mixed model
+lm_oysters_r <- lm(growth_rate ~ temp_av + sal_av + av_dmax_t +
+                     av_dmin_t + av_dmin_s + tot_dh_s +
+                     outplant_time,
+                   data = just_rafts)
+plot(lm_oysters_r)
+summary(lm_oysters_r)
+
+or_res <- residuals(lm_oysters_r, type = "pearson")
+acf(or_res)
+# no real temporal autocorrelation
+
+anova(lm_oysters_r)
+
+lm_oysters_b <- lm(growth_rate ~ temp_av + sal_av + av_dmax_t +
+                     av_dmin_t + tot_dh_t + tot_dh_s +
+                     outplant_time,
+                   data = just_beach)
+plot(lm_oysters_b)
+summary(lm_oysters_b)
+
+ob_res <- residuals(lm_oysters_b, type = "pearson")
+acf(ob_res)
+# minor autocorrelation, but let's ignore for this analysis
+
+anova(lm_oysters_b)
+
+### follow this part of the script for gamm
 
 gamm_oysters <- gamm(growth_rate ~ temp_av + sal_av + av_dmax_t + 
-                     av_dmin_t + av_dmin_s + tot_dh_t + tot_dh_s +
-                     s(outplant_time), random = list(subsite = ~1, bag = ~1),
-                   data = oysters_full)
+                       av_dmin_t + av_dmin_s + tot_dh_t + tot_dh_s +
+                       s(outplant_time), random = list(subsite = ~1, bag = ~1),
+                     data = oysters_full)
 qq.gam(gamm_oysters$gam)
 
 # qq plot is pretty straight - residuals look normal except for one point
@@ -45,19 +95,11 @@ anova(gamm_oysters$gam)
 ## I talked to my supervisor, and he told me we should look at
 # the beach oysters and raft oysters separately because they 
 # are such different growing environments.
-
-# separate data frame into just raft oysters and just beach oysters
-just_rafts <- oysters_full %>% 
-  filter(b_r == "r")
-
-just_beach <- oysters_full %>% 
-  filter(b_r == "b")
-
-# then make the models, same formula as before
+# same formula as before
 gamm_oysters_raft <- gamm(growth_rate ~ temp_av + sal_av + av_dmax_t + 
-                       av_dmin_t + av_dmin_s + tot_dh_t + tot_dh_s +
-                       s(outplant_time), random = list(subsite = ~1, bag = ~1),
-                     data = just_rafts)
+                            av_dmin_t + av_dmin_s + tot_dh_t + tot_dh_s +
+                            s(outplant_time), random = list(subsite = ~1, bag = ~1),
+                          data = just_rafts)
 summary(gamm_oysters_raft$gam)
 anova(gamm_oysters_raft$gam)
 
