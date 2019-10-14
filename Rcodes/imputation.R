@@ -17,8 +17,6 @@ library(tidyverse)
 library(imputeTS)
 
 salt_temp <- read.csv("../data/date_transformed_salinity_temperature.csv")
-mort<- read.csv("../data/mort_data.csv")
-growth <- read.csv("../data/full_data.csv")
 
 
 aggr_st <- aggr(salt_temp, numbers= TRUE, sortVars = TRUE)
@@ -97,42 +95,14 @@ qqnorm(salt_temp$sal)
 # multi is too advanced: there is a relationship between temp and salinity
 
 # univariate first
-
-
 df <- salt_temp
 
 # time series imputation
 # we just apply the time series imputation and see the result by plot
 # subset of for each location and site, apply the imputation and then see the result
 
-# testing if the replacement is well done
-a <- df %>% filter(site=="A" & b_r =="b") %>% select(sal)
-b <- temptempdf %>% filter(site=="A" & b_r =="b")%>% select(sal)
-c <- data.frame("original"=a, "test"=b)
-
-
-
-## generate full data
-min <- min(df$date_time)
-max <- max(df$date_time)
-date_time <- seq(min,max,0.01)
-n=length(date_time)
-date_time <- rep(date_time,10)
-site <- c(rep("A", times = 2*n), rep("B", times = 2*n),
-          rep("C", times = 2*n), rep("D", times = 2*n),
-          rep("E", times = 2*n)) 
-b_r <- rep(c(rep("b", times = n), rep("r", times = n)), times = 5)
-empty <- data.frame("site"=site,"b_r"=b_r,"date_time"=date_time)
-empty$site <- factor(empty$site, levels = c("A","B","C","D","E"))
-empty$b_r <- factor(empty$b_r, levels = c("b","r"))
-
-df$date_time<- as.integer(df$date_time*100)
-empty$date_time<- as.integer(empty$date_time*100)
-
-fulldf  <- merge(x=empty,y=df,by=c("date_time","site","b_r"), all = T)
-
 # new df for imputation
-newdf <- fulldf
+newdf <- df
 
 #proto type: using kalman spline, giving us a complete data set (single imputation)
 sum(is.na(newdf$temp)) # check number of na
@@ -147,11 +117,12 @@ for (site.arg in 1:5) {
       
       ts.df <- ts(subset.df)
       # ts.df <- ts(subset.df, start = c(2017,4), frequency = 366*24*4) # make time series object
-      
       #if (method=="kalman") imp <- na_kalman(ts.df)
       #imp.v <- as.numeric(imp)
       imp <- na_kalman(ts.df)
-      s <- imp
+      plotNA.distribution(ts.df)
+      plotNA.imputations(ts.df,imp)
+      newdf[newdf$site == site.value & newdf$b_r == b_r.value,targer.value] <- imp
       # newdf[site == site.value & b_r == b_r.value] <- newdf %>% filter(site==site.value & b_r ==b_r.value) %>% 
       #   mutate(sal=imp) %>% as.data.frame()
     }
@@ -161,45 +132,11 @@ for (site.arg in 1:5) {
 sum(is.na(newdf$temp)) #verify all na is gone.
 sum(is.na(newdf$sal)) #verify all na is gone.
 
-# check imputed values 
-
-# frequency testing: should make a year : E, r, salinity
-subset.df <- df[newdf$site=="C" & newdf$b_r=="b", 'sal']
-temp <- ts(subset.df)
-plot(temp)
-length(temp)
-sum(is.na(temp))
-imp <- na_seadec(temp)
-# plotNA.distribution(temp)
-plotNA.imputations(temp,imp)
-
-# reason why we can't use bigger set
-# frequency testing: should make a year : E, r, salinity
-subset.df <- fulldf[newdf$site=="C" & newdf$b_r=="b", 'sal']
-temp <- ts(subset.df)
-plot(temp)
-
-# for temp, no 0 values. for salinity, 0 values 
-# what time series imputation should we use ?
-
-# follows the tutorial of ts imputation
-
-# make a function for one part
-
-# make another function for one data frame
-
-# apply the function to the df
-
-# we get a single time series imputation
-
 # for choosing imputation values 
-regMP <- lm(Badge~Age+Tarsus, data=birds)
-crPlot(regMP, "Age")
-
 
 ## we apply MCMC mice imputation:
 
-
+write_csv(newdf, "../data/time_series_imputed.csv")
 
 
 
@@ -211,6 +148,70 @@ crPlot(regMP, "Age")
 # nonlinear regression
 
 # nonparameteric model 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -266,3 +267,25 @@ subset_replace <- function(df, site.arg, b_r.arg, target, method="kalman") {
     mutate(sal=imp) %>% as.data.frame()
   return(newdf)
 }
+
+
+
+
+## generate full data
+min <- min(df$date_time)
+max <- max(df$date_time)
+date_time <- seq(min,max,0.01)
+n=length(date_time)
+date_time <- rep(date_time,10)
+site <- c(rep("A", times = 2*n), rep("B", times = 2*n),
+          rep("C", times = 2*n), rep("D", times = 2*n),
+          rep("E", times = 2*n)) 
+b_r <- rep(c(rep("b", times = n), rep("r", times = n)), times = 5)
+empty <- data.frame("site"=site,"b_r"=b_r,"date_time"=date_time)
+empty$site <- factor(empty$site, levels = c("A","B","C","D","E"))
+empty$b_r <- factor(empty$b_r, levels = c("b","r"))
+
+df$date_time<- as.integer(df$date_time*100)
+empty$date_time<- as.integer(empty$date_time*100)
+
+fulldf  <- merge(x=empty,y=df,by=c("date_time","site","b_r"), all = T)
