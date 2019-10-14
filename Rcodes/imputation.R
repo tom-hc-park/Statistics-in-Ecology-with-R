@@ -6,8 +6,6 @@ if (!require("Amelia")) install.packages("Amelia")
 if (!require("mice")) install.packages("mice", dependencies = TRUE)
 if (!require("lme4")) install.packages("lme4")
 
-install.packages("broom", "mitml")
-
 # load required libraries
 library(VIM)
 library(Amelia)
@@ -19,9 +17,12 @@ library(tidyverse)
 salt_temp <- read.csv("../data/date_transformed_salinity_temperature.csv")
 mort<- read.csv("../data/mort_data.csv")
 growth <- read.csv("../data/full_data.csv")
+df. <- read.csv("../data/salinity_temperature.csv")
 
 aggr_st <- aggr(salt_temp, numbers= TRUE, sortVars = TRUE)
 # ~5% of the salinity data is missing and <1% of the temperature data
+
+## possible model: temp/salinity ~ time + site + beach/raft 
 
 marginplot(salt_temp[,c("sal","date_time")])
 # 0 salinity's are from when the tide is off
@@ -38,24 +39,28 @@ marginplot(salt_temp[,c("temp","date_time")])
 # on missing values of temp; she just randomly lost the logger on that day.
  
 marginplot(salt_temp[,c("sal","temp")])
-# revised: when temp is missing, salinity is not always missing
+# revised: when temp is missing, salinity is always missing
 # can we infer that from this plot?
 # summer: high temp, low salinity
 # winter: low temp, high salinity
 # we can say that the missingness happens when the weather was spring/summer
 
+marginplot(salt_temp[,c("sal","site")])
+# most of the missing values from site 3 and 4. 
+
+marginplot(salt_temp[,c("sal","b_r")])
+# missing values happening all locations.
+
 # I have to check that when temp is missing there's no way that sal alive.
 x <- is.na(salt_temp$temp)
 y <- is.na(salt_temp$sal)
-df <- data.frame("temp"=x, "sal"=y)
-n = nrow(salt_temp)
-plot(salt_temp$date_time, salt_temp$sal)
+tf.df <- data.frame("temp"=x, "sal"=y)
+tf.df %>% filter(temp==T, sal==T)
+tf.df %>% filter(temp==T, sal==F) # 0 rows
+# note that temp missing implies salt always missing
+tf.df %>% filter(temp==F, sal==T) # only salt missing possible
 
-df %>% filter(temp==T, sal==F)
 # EMB requires multi normal distribuion and MAR assumption.
-salt_temp %>% filter(is.na(temp)==T)
-# so only temp missing and only sal missing is all possible
-
 # checking for multinormality
 hist(salt_temp$temp)
 qqnorm(salt_temp$temp)
@@ -78,40 +83,140 @@ qqnorm(salt_temp$sal)
 # more salinity missing 
 # imputing variables can include site,(beach, raft also location)
 # no MAR: we cannot say that Amelia tends to lost her logger on some specific locations.
-# temp/salinity ~ time + site + beach/raft
+
 
 # EMB worst :transformation needed if we wanna use this 
 # MCMC vs times series 
-# fit(mcmc) vs fit(time series)
+# fit(mcmc) vs fit(time series)  vs complete case
 
 ## time series imputation modeling
 
-# univariate or multivariate? there is a relationship between temp and salinity
-# as we discovered earlier. 
+# univariate or multivariate time series imputation:
+# multi is too advanced: there is a relationship between temp and salinity
 
 # univariate first
 if (!require("imputeTS")) install.packages("imputeTS")
 library(imputeTS)
-str(salt_temp)
-df <- salt_temp
-df$date <- as.Date(df$date)
-str(df)
-(unique(df$date))
-(min(df$date_time))
-(max(df$date_time))
-ts.df <- ts(salt_temp[c('sal','temp')], start = )
-# we fill out missing times 
-# maybe empty data frame and then join them with keys date_time, site and b_r
 
-df$date_time[1]
-df %>% select(site,b_r,date_time) %>% filter((date_time<=42824.54 & date_time >=42824.53))
-df %>% filter(date_time==42824.53)
-plotNA.distribution(salt_temp$temp)
-plotNA.distribution(salt_temp$sal)
-plotNA.distribution(ts.df)
+df <- salt_temp
+
+# time series imputation
+# we just apply the time series imputation and see the result by plot
+# subset of for each location and site, apply the imputation and then see the result
+
+# testing if the replacement is well done
+a <- df %>% filter(site=="A" & b_r =="b") %>% select(sal)
+b <- temptempdf %>% filter(site=="A" & b_r =="b")%>% select(sal)
+c <- data.frame("original"=a, "test"=b)
+
+newdf <- df 
+
+#proto type
+sum(is.na(newdf))
+for (site.arg in 1:5) {
+  for (b_r.arg in 1:2) {
+    for (target in 1:2) {
+      site.value=levels(df$site)[site.arg]
+      b_r.value=levels(df$b_r)[b_r.arg]
+      targer.value=if (target==1) "temp" else if (target==2) "sal"
+      subset.df <- df %>% filter(site == site.value & b_r == b_r.value) %>% select(targer.value)
+      ts.df <- ts(subset.df) # make time series object
+      #if (method=="kalman") imp <- na_kalman(ts.df)
+      #imp.v <- as.numeric(imp)
+      imp <- na_kalman(ts.df)
+      newdf[df$site==site.value & df$b_r==b_r.value, targer.value] <- imp
+      # newdf[site == site.value & b_r == b_r.value] <- newdf %>% filter(site==site.value & b_r ==b_r.value) %>% 
+      #   mutate(sal=imp) %>% as.data.frame()
+    }
+  }
+}
+sum(is.na(newdf)) #verify all na is gone.
+
+
+## generate full data
+min <- min(df$date_time)
+max <- max(df$date_time)
+date_time <- seq(min,max,0.01)
+n=length(date_time)
+date_time <- rep(date_time,10)
+site <- c(rep("A", times = 2*n), rep("B", times = 2*n),
+          rep("C", times = 2*n), rep("D", times = 2*n),
+          rep("E", times = 2*n)) 
+b_r <- rep(c(rep("b", times = n), rep("r", times = n)), times = 5)
+empty <- data.frame("site"=site,"b_r"=b_r,"date_time"=date_time)
+empty$site <- factor(empty$site, levels = c("A","B","C","D","E"))
+empty$b_r <- factor(empty$b_r, levels = c("b","r"))
+
+df$date_time<- as.integer(df$date_time*100)
+empty$date_time<- as.integer(empty$date_time*100)
+
+fulldf  <- merge(x=empty,y=df,by=c("date_time","site","b_r"), all = T)
+
+ts.full <- ts(fulldf$, start = c(2017,4), frequency = 34560)
+ts.plot(ts.full)
+
+
+12*30*24*4
+# for temp, no 0 values. for salinity, 0 values 
+# what time series imputation should we use ?
+
+# follows the tutorial of ts imputation
+
+# make a function for one part
+
+# make another function for one data frame
+
+# apply the function to the df
+
+# we get a single time series imputation
+
+# for choosing imputation values 
+regMP <- lm(Badge~Age+Tarsus, data=birds)
+crPlot(regMP, "Age")
+
+
+## we apply MCMC mice imputation:
+
+
+
+
+
+
 ## model part
+
 # we may have to fit gam because the model assumption violation
 
 # nonlinear regression
 
 # nonparameteric model 
+
+
+
+subset_ftn <- function(df, site.arg, b_r.arg, target) {
+  site.value=levels(df$site)[site.arg]
+  b_r.value=levels(df$b_r)[b_r.arg]
+  targer.value=if (target==1) "temp" else if (target==2) "sal"
+  subset.df <- df %>% filter(site == site.value & b_r == b_r.value) %>% select(targer.value)
+  return(subset.df)
+}
+
+
+# we need to replace the original values of data frame with imputed values 
+replace_NA <- function(df, site.arg, b_r.arg, targer) {
+  temp <- subset_ftn(df,1,1,2) #generate a subset
+  ts.df <- ts(temp) # make time series object
+  imp <- na_kalman(ts.df) #apply a function 
+}
+
+subset_replace <- function(df, site.arg, b_r.arg, target, method="kalman") {
+  site.value=levels(df$site)[site.arg]
+  b_r.value=levels(df$b_r)[b_r.arg]
+  targer.value=if (target==1) "temp" else if (target==2) "sal"
+  subset.df <- df %>% filter(site == site.value & b_r == b_r.value) %>% select(targer.value)
+  ts.df <- ts(subset.df) # make time series object
+  if (method=="kalman") imp <- na_kalman(ts.df)
+  #imp.v <- as.numeric(imp)
+  newdf <- df %>% filter(site==site.value & b_r ==b_r.value) %>% 
+    mutate(sal=imp) %>% as.data.frame()
+  return(newdf)
+}
