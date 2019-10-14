@@ -5,6 +5,7 @@ if (!require("VIM")) install.packages("VIM")
 if (!require("Amelia")) install.packages("Amelia")
 if (!require("mice")) install.packages("mice", dependencies = TRUE)
 if (!require("lme4")) install.packages("lme4")
+if (!require("imputeTS")) install.packages("imputeTS")
 
 # load required libraries
 library(VIM)
@@ -13,11 +14,12 @@ library(mice)
 library(lme4)
 library(mice)
 library(tidyverse)
+library(imputeTS)
 
 salt_temp <- read.csv("../data/date_transformed_salinity_temperature.csv")
 mort<- read.csv("../data/mort_data.csv")
 growth <- read.csv("../data/full_data.csv")
-df. <- read.csv("../data/salinity_temperature.csv")
+
 
 aggr_st <- aggr(salt_temp, numbers= TRUE, sortVars = TRUE)
 # ~5% of the salinity data is missing and <1% of the temperature data
@@ -95,8 +97,7 @@ qqnorm(salt_temp$sal)
 # multi is too advanced: there is a relationship between temp and salinity
 
 # univariate first
-if (!require("imputeTS")) install.packages("imputeTS")
-library(imputeTS)
+
 
 df <- salt_temp
 
@@ -109,28 +110,6 @@ a <- df %>% filter(site=="A" & b_r =="b") %>% select(sal)
 b <- temptempdf %>% filter(site=="A" & b_r =="b")%>% select(sal)
 c <- data.frame("original"=a, "test"=b)
 
-newdf <- df 
-
-#proto type
-sum(is.na(newdf))
-for (site.arg in 1:5) {
-  for (b_r.arg in 1:2) {
-    for (target in 1:2) {
-      site.value=levels(df$site)[site.arg]
-      b_r.value=levels(df$b_r)[b_r.arg]
-      targer.value=if (target==1) "temp" else if (target==2) "sal"
-      subset.df <- df %>% filter(site == site.value & b_r == b_r.value) %>% select(targer.value)
-      ts.df <- ts(subset.df) # make time series object
-      #if (method=="kalman") imp <- na_kalman(ts.df)
-      #imp.v <- as.numeric(imp)
-      imp <- na_kalman(ts.df)
-      newdf[df$site==site.value & df$b_r==b_r.value, targer.value] <- imp
-      # newdf[site == site.value & b_r == b_r.value] <- newdf %>% filter(site==site.value & b_r ==b_r.value) %>% 
-      #   mutate(sal=imp) %>% as.data.frame()
-    }
-  }
-}
-sum(is.na(newdf)) #verify all na is gone.
 
 
 ## generate full data
@@ -152,11 +131,54 @@ empty$date_time<- as.integer(empty$date_time*100)
 
 fulldf  <- merge(x=empty,y=df,by=c("date_time","site","b_r"), all = T)
 
-ts.full <- ts(fulldf$, start = c(2017,4), frequency = 34560)
-ts.plot(ts.full)
+# new df for imputation
+newdf <- fulldf
 
+#proto type: using kalman spline, giving us a complete data set (single imputation)
+sum(is.na(newdf$temp)) # check number of na
+sum(is.na(newdf$sal)) 
+for (site.arg in 1:5) {
+  for (b_r.arg in 1:2) {
+    for (target in 1:2) {
+      site.value=levels(newdf$site)[site.arg]
+      b_r.value=levels(newdf$b_r)[b_r.arg]
+      targer.value=if (target==1) "temp" else if (target==2) "sal"
+      subset.df <- newdf %>% filter(site == site.value & b_r == b_r.value) %>% select(targer.value)
+      
+      ts.df <- ts(subset.df)
+      # ts.df <- ts(subset.df, start = c(2017,4), frequency = 366*24*4) # make time series object
+      
+      #if (method=="kalman") imp <- na_kalman(ts.df)
+      #imp.v <- as.numeric(imp)
+      imp <- na_kalman(ts.df)
+      s <- imp
+      # newdf[site == site.value & b_r == b_r.value] <- newdf %>% filter(site==site.value & b_r ==b_r.value) %>% 
+      #   mutate(sal=imp) %>% as.data.frame()
+    }
+  }
+} # warning: no justification of kalman spline yet.
 
-12*30*24*4
+sum(is.na(newdf$temp)) #verify all na is gone.
+sum(is.na(newdf$sal)) #verify all na is gone.
+
+# check imputed values 
+
+# frequency testing: should make a year : E, r, salinity
+subset.df <- df[newdf$site=="C" & newdf$b_r=="b", 'sal']
+temp <- ts(subset.df)
+plot(temp)
+length(temp)
+sum(is.na(temp))
+imp <- na_seadec(temp)
+# plotNA.distribution(temp)
+plotNA.imputations(temp,imp)
+
+# reason why we can't use bigger set
+# frequency testing: should make a year : E, r, salinity
+subset.df <- fulldf[newdf$site=="C" & newdf$b_r=="b", 'sal']
+temp <- ts(subset.df)
+plot(temp)
+
 # for temp, no 0 values. for salinity, 0 values 
 # what time series imputation should we use ?
 
@@ -189,6 +211,30 @@ crPlot(regMP, "Age")
 # nonlinear regression
 
 # nonparameteric model 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
