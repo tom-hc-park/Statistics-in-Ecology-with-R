@@ -22,8 +22,7 @@ df <- salt_temp
 str(df)
 summary(df)
 dfM <- mice(df[,c("site", "b_r","temp","sal","hour","date")], m=5, seed=1)
-save(dfM, "../data/mice_imputed_data.RData")
-
+save(dfM, file = "../data/mice_imputed_data.RData")
 #### please run codes until here and then use the dfM for your model fit
 
 
