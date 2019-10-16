@@ -17,10 +17,17 @@ rafts_ts <- oysters_rs_ts %>%
 beach_ts <- oysters_rs_ts %>% 
   filter(b_r == "b")
 
-M.ts <- lm(growth_rate ~ temp_av + sal_av + av_dmax_t +
-                     av_dmin_t + av_dmin_s + tot_dh_s +
+M.ts.b <- lm(growth_rate ~ temp_av + sal_av + av_dmax_t +
+                     av_dmin_t + tot_dh_t + tot_dh_s +
                      outplant_time,
-                   data = rafts_ts)
+                   data = beach_ts)
+summary(M.ts)
+anova(M.ts)
+
+M.ts.r <- lm(growth_rate ~ temp_av + sal_av + av_dmax_t +
+             av_dmin_t + av_dmin_s + tot_dh_t +
+             outplant_time,
+           data = rafts_ts)
 summary(M.ts)
 anova(M.ts)
 
@@ -56,13 +63,19 @@ may_Xl <- X_long %>%
   group_by(.imp, site, b_r) %>% 
   na.omit() %>% 
   dplyr::summarise(temp_av = mean(temp, na.rm = TRUE),
-                   sal_av = mean(sal, na.rm = TRUE))
+                   temp_se = (sd(temp, na.rm = TRUE)/sqrt(length(temp))),
+                   sal_av = mean(sal, na.rm = TRUE),
+                   sal_se = (sd(sal, na.rm = TRUE)/sqrt(length(sal))))
+
 may2_Xl <- ddh_Xl %>% 
   filter(date < "2017-05-26") %>% 
   group_by(.imp, site, b_r) %>% 
   dplyr::summarise(av_dmax_t = mean(dmax_t),
+                   dmax_tse = mean(sd(dmax_t)/sqrt(length(dmax_t)),na.rm= TRUE),
                    av_dmin_t = mean(dmin_t),
+                   dmin_tse = mean(sd(dmin_t)/sqrt(length(dmin_t)), na.rm= TRUE),
                    av_dmin_s = mean(dmin_s),
+                   dmin_sse = mean(sd(dmin_s)/sqrt(length(dmin_s)), na.rm= TRUE),
                    tot_dh_t = sum(dh_t),
                    tot_dh_s = sum(dh_s))
 mayf_Xl <- may_Xl %>% 
@@ -73,15 +86,19 @@ mayf_Xl <- may_Xl %>%
 july_Xl <- X_long %>% 
   filter(date < "2017-07-19" & date >= "2017-05-26") %>% 
   group_by(.imp, site, b_r) %>% 
-  na.omit() %>% 
   dplyr::summarise(temp_av = mean(temp, na.rm = TRUE),
-                   sal_av = mean(sal, na.rm = TRUE))
+                   temp_se = sd(temp, na.rm = TRUE),
+                   sal_av = mean(sal, na.rm = TRUE),
+                   sal_se = sd(sal, na.rm = TRUE))
 july2_Xl <- ddh_Xl %>% 
   filter(date < "2017-07-19" & date >= "2017-05-26") %>% 
   group_by(.imp, site, b_r) %>% 
   dplyr::summarise(av_dmax_t = mean(dmax_t),
+                   dmax_sd = sd(dmax_t, na.rm= TRUE),
                    av_dmin_t = mean(dmin_t),
+                   dmin_tse = sd(dmin_t, na.rm= TRUE),
                    av_dmin_s = mean(dmin_s),
+                   dmin_sse = sd(dmin_s, na.rm= TRUE),
                    tot_dh_t = sum(dh_t),
                    tot_dh_s = sum(dh_s))
 julyf_Xl <- july_Xl %>% 
@@ -175,11 +192,20 @@ model_b <- with(mids_b, lm(growth_rate ~ temp_av + sal_av + av_dmax_t +
                              av_dmin_t + tot_dh_t + tot_dh_s +
                              outplant_time))
 model_r <- with(mids_r, lm(growth_rate ~ temp_av + sal_av + av_dmax_t +
-                             av_dmin_t + tot_dh_t + av_dmin_s +
+                             av_dmin_t + av_dmin_s + tot_dh_s +
                              outplant_time))
 
 mice_beach <- pool(model_b)
 mice_raft <- pool(model_r)
 
-summary(mice_beach)
-summary(mice_raft)
+
+write.table(summary(mice_beach), file = "../data/miceb.txt", quote = FALSE, sep = "\t", row.names = TRUE)
+write.table(summary(mice_raft), file = "../data/micer.txt", quote = FALSE, sep = "\t", row.names = TRUE)
+write.table(summary(M.ts.b)$coefficients, file = "../data/tsb.txt", quote = FALSE, sep = "\t", row.names = TRUE)
+write.table(summary(M.ts.r)$coefficients, file = "../data/tsr.txt", quote = FALSE, sep = "\t", row.names = TRUE)
+write.table(summary(lm_oysters_b)$coefficients, file = "../data/ccab.txt", quote = FALSE, sep = "\t", row.names = TRUE)
+write.table(summary(lm_oysters_r)$coefficients, file = "../data/ccar.txt", quote = FALSE, sep = "\t", row.names = TRUE)
+
+
+write.table(julyf_Xl, "../data/mice_st.txt", quote = FALSE, sep = "\t", row.names = FALSE)
+

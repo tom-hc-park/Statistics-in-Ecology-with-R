@@ -86,14 +86,19 @@ sal_temp_may17 <- sal_temp_outplant %>%
   filter(outplant_time <= 8.1) %>% 
   group_by(site, b_r) %>% 
   dplyr::summarise(temp_av = mean(temp, na.rm = TRUE),
-                   sal_av = mean(sal, na.rm = TRUE))
+                   temp_se = sd(temp, na.rm = TRUE),
+                   sal_av = mean(sal, na.rm = TRUE),
+                   sal_se = sd(sal, na.rm = TRUE))
 
 sal_temp_may17_2 <- sal_temp_ddh %>% 
   filter(outplant_time <= 8.1) %>% 
   group_by(site, b_r) %>% 
   dplyr::summarise(av_dmax_t = mean(dmax_t),
+                   dmax_sd = sd(dmax_t, na.rm= TRUE),
                    av_dmin_t = mean(dmin_t),
+                   dmin_tse = sd(dmin_t, na.rm= TRUE),
                    av_dmin_s = mean(dmin_s),
+                   dmin_sse = sd(dmin_s, na.rm= TRUE),
                    tot_dh_t = sum(dh_t),
                    tot_dh_s = sum(dh_s))
 
@@ -106,14 +111,19 @@ sal_temp_july17 <- sal_temp_outplant %>%
   filter(outplant_time <= 15.9 & outplant_time > 8.1) %>% 
   group_by(site, b_r) %>% 
   dplyr::summarise(temp_av = mean(temp, na.rm = TRUE),
-                   sal_av = mean(sal, na.rm = TRUE))
+                   temp_sd = sd(temp, na.rm = TRUE),
+                   sal_av = mean(sal, na.rm = TRUE),
+                   sal_se = (sd(sal, na.rm = TRUE)/sqrt(length(sal))))
 
 sal_temp_july17_2 <- sal_temp_ddh %>% 
   filter(outplant_time <= 15.9 & outplant_time > 8.1) %>% 
   group_by(site, b_r) %>% 
   dplyr::summarise(av_dmax_t = mean(dmax_t),
+                   dmax_tse = mean(sd(dmax_t, na.rm= TRUE)/sqrt(length(dmax_t))),
                    av_dmin_t = mean(dmin_t),
+                   dmin_tse = mean(sd(dmin_t, na.rm= TRUE)/sqrt(length(dmin_t))),
                    av_dmin_s = mean(dmin_s),
+                   dmin_sse = mean(sd(dmin_s, na.rm= TRUE)/sqrt(length(dmin_s))),
                    tot_dh_t = sum(dh_t),
                    tot_dh_s = sum(dh_s))
 
@@ -196,3 +206,6 @@ response_summary <- sal_temp_may17_full %>%
 # for the response, and we can join and model these data
 
 write_csv(response_summary, "../data/summary.csv")
+
+## write up example data table to demonstrate the effect of imputation on environmental paramaters
+write.table(sal_temp_july17_full, "../data/cca_st.txt", quote = FALSE, sep = "\t", row.names = FALSE)
