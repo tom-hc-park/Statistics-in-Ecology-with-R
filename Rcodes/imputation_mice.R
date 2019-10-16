@@ -12,8 +12,6 @@ library(VIM)
 library(Amelia)
 library(mice)
 library(lme4)
-library(mice)
-library(tidyverse)
 library(imputeTS)
 
 salt_temp <- read.csv("../data/date_transformed_salinity_temperature.csv")
@@ -37,34 +35,55 @@ marginplot(salt_temp[,c("sal","date_time")])
 # the missingness seems to be MCAR because the missingness is not related to 
 #the value of data variables. 
 
+jpeg(file="hour~sal.jpeg")
+marginplot(salt_temp[,c("sal","hour")])
+dev.off()
+
+jpeg(file="temp~time.jpeg")
 marginplot(salt_temp[,c("temp","date_time")])
+dev.off()
 # again, the date_time has nth to do with the temperature missingness
 # It's just missing completely at random
 # that means that we can use complete case analysis and that will give us unbiased estimate
 # the red dot is when Amelia lost her logger. 
 # it's MCAR and we cannot say a specific date value for date variable has effect on missingness
 # on missing values of temp; she just randomly lost the logger on that day.
-
+jpeg("salinity~temp.jpeg")
 marginplot(salt_temp[,c("sal","temp")])
+dev.off()
 # revised: when temp is missing, salinity is always missing
 # can we infer that from this plot?
 # summer: high temp, low salinity
 # winter: low temp, high salinity
 # we can say that the missingness happens when the weather was spring/summer
-
-marginplot(salt_temp[,c("sal","site")])
+jpeg("site~salt_sample.jpeg")
+smp <- sample(1:nrow(salt_temp), 300)
+marginplot(salt_temp[smp,c("sal","site")])
+# marginplot(salt_temp[,c("sal","site")])
+dev.off()
 # most of the missing values from site 3 and 4. 
-
-marginplot(salt_temp[,c("sal","b_r")])
+jpeg("b_r~salt.jpeg")
+jpeg("b_r~salt_sample.jpeg")
+smp <- sample(1:nrow(salt_temp), 300)
+# marginplot(salt_temp[,c("sal","b_r")])
+marginplot(salt_temp[smp,c("sal","b_r")])
+dev.off()
 # missing values happening all locations.
 
 # EMB requires multi normal distribuion and MAR assumption.
 # checking for multinormality
-hist(salt_temp$temp)
-qqnorm(salt_temp$temp)
-
-hist(salt_temp$sal)
-qqnorm(salt_temp$sal)
+jpeg("histogram_temp.jpeg")
+hist(salt_temp$temp, main = "histogram of temperature", xlab="temperature")
+dev.off()
+jpeg("QQ-plot_temp.jpeg")
+qqnorm(salt_temp$temp, main = "QQ Plot of temperature", xlab="temperature")
+dev.off()
+jpeg("histogram_salt.jpeg")
+hist(salt_temp$sal, main = "histogram of salinity", xlab="salinity")
+dev.off()
+jpeg("QQ_salt.jpeg")
+qqnorm(salt_temp$sal,  main = "QQ Plot of salinity", xlab="salinity")
+dev.off()
 # multi normality implies marginal normality.
 # there is no way that multi normality holds.
 # we bravely skip EMB part and just go for MCMC MICE
