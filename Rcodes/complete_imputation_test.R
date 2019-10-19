@@ -13,12 +13,11 @@ Er_mcar <- Er_complete %>%
 missing_b <- sample_frac(Eb_complete, 0.9)
 
 E_mcar <- Eb_complete %>% 
-  dplyr::select(date_time, b_r) %>% 
   full_join(missing_b) %>%
   full_join(Er_mcar) %>% 
   dplyr::select(date_time, temp, sal, b_r) 
 
-# remove 10% of data from early in the dataset
+# remove 10% of the data from the earliest part of the dataset for MAR (one chunk of data missing in time)
 
 Er_mar <- Er_complete %>% 
   dplyr::select(date_time, temp, sal, b_r) %>% 
@@ -29,7 +28,7 @@ E_mar <- Eb_complete %>%
   filter(date_time > 42940.5) %>% 
   full_join(Er_mar)
 
-# remove 10% of data based on low salinity (MNAR)
+# remove 10% of data based on salinity value (the lowest 10% salinity values) to make MNAR case
 
 Er_mnar <- Er_complete %>% 
   dplyr::select(date_time, temp, sal, b_r) %>% 
@@ -44,8 +43,10 @@ E_mnar <- Eb_complete %>%
 
 library(imputeTS)
 
-# MCAR
+# for MCAR data
 E_mcar$b_r <- as.factor(E_mcar$b_r)
+
+# create new data frame for imputation
 E_mcar_imp <- E_mcar
 
 for (b_r.arg in 1:2) {
@@ -66,7 +67,7 @@ for (b_r.arg in 1:2) {
   }
 }
 
-# MAR
+# MAR data
 E_mar$b_r <- as.factor(E_mar$b_r)
 E_mar_imp <- E_mar
 
@@ -88,7 +89,7 @@ for (b_r.arg in 1:2) {
   }
 }
 
-## MNAR
+## MNAR data
 E_mnar$b_r <- as.factor(E_mnar$b_r)
 E_mnar_imp <- E_mnar
 
@@ -113,7 +114,9 @@ for (b_r.arg in 1:2) {
 
 # now do the mice imputation
 
+# create hour and date variables
 E_mcar$time <- as.POSIXct(E_mcar$date_time*24*3600 + as.POSIXct("1899-12-29 23:00") )
+
 E_mcar <- E_mcar %>% 
   mutate(hour = as.POSIXlt(time)$hour) %>% 
   separate(col = "time", into = c("date","clocktime"),sep=" ", remove = TRUE) %>% 
@@ -121,7 +124,7 @@ E_mcar <- E_mcar %>%
 
 mice_MCAR <- mice(E_mcar[,c("b_r","temp","sal","hour","date")], m=5, seed=1)
 
-# MAR
+# same thing for MAR data
 E_mar$time <- as.POSIXct(E_mar$date_time*24*3600 + as.POSIXct("1899-12-29 23:00") )
 E_mar <- E_mar %>% 
   mutate(hour = as.POSIXlt(time)$hour) %>% 
@@ -130,7 +133,7 @@ E_mar <- E_mar %>%
 
 mice_MAR <- mice(E_mar[,c("b_r","temp","sal","hour","date")], m=5, seed=1)
 
-# MNAR
+# same for MNAR data
 E_mnar$time <- as.POSIXct(E_mnar$date_time*24*3600 + as.POSIXct("1899-12-29 23:00") )
 E_mnar <- E_mnar %>% 
   mutate(hour = as.POSIXlt(time)$hour) %>% 
@@ -141,7 +144,7 @@ mice_MNAR <- mice(E_mnar[,c("b_r","temp","sal","hour","date")], m=5, seed=1)
 
 ## now summarize everything and see how means compare between true & imputed
 
-## complete case first
+## full data first (no missing)
 
 Ejoint <- Er_complete %>% 
   full_join(Eb_complete) %>% 
@@ -155,31 +158,38 @@ Ejoint <- Ejoint %>%
 true_values_daily <- Ejoint %>% 
   dplyr::select(-clocktime, -date_time) %>% 
   group_by(b_r, date) %>% 
-  dplyr::summarise(daily.max.t = max(temp),
-                   daily.min.t = min(temp),
-                   daily.min.s = min(sal))
+  dplyr::summarise(daily.max.t = max(temp), # daily maximum temperature
+                   daily.min.t = min(temp), # daily minimum temperature
+                   daily.min.s = min(sal)) # daily minimum salinity
 
 true_mean_dailies <- true_values_daily %>% 
   group_by(b_r) %>% 
-  dplyr::summarise(daily.mean.maxt = mean(daily.max.t),
+  dplyr::summarise(daily.mean.maxt = mean(daily.max.t), # now average the daily measurements over the whole period
                    daily.mean.mint = mean(daily.min.t),
                    daily.mean.mins = mean(daily.min.s))
 
 true_values_overall <- Ejoint %>% 
   group_by(b_r) %>%
-  dplyr::summarise(average.temp = mean(temp),
-                   average.sal = mean(sal),
-                   total.dh = degree_hours_above(29, temp),
-                   total.sh = degree_hours_below(20, sal))
+  dplyr::summarise(average.temp = mean(temp), 
+                   average.sal = mean(sal), # average salinity
+                   total.dh = degree_hours_above(29, temp), # total degree hours above 29 C temperature
+                   total.sh = degree_hours_below(20, sal)) # total psu hours below 20 psu salinity
 
-true_values <- true_mean_dailies %>% 
+true_values <- true_mean_dailies %>% # join the data frames together
   full_join(true_values_overall)%>% 
-  mutate(missing.data = "no_missing") %>% 
-  mutate(imputation.method = "none")
+  mutate(missing.data = "no_missing") %>% # label the type of missing data scenario
+  mutate(imputation.method = "none") # and the imputation method used
 
-## now with missing df
+## now with the imputed data
 
-ts_mcar_daily <- E_mcar %>% 
+E_mcar_imp$time <- as.POSIXct(E_mcar_imp$date_time*24*3600 + as.POSIXct("1899-12-29 23:00") )
+
+E_mcar_imp <- E_mcar_imp %>% 
+  mutate(hour = as.POSIXlt(time)$hour) %>% 
+  separate(col = "time", into = c("date","clocktime"),sep=" ", remove = TRUE) %>% 
+  dplyr::select(-clocktime, -date_time)
+
+ts_mcar_daily <- E_mcar_imp %>% 
   group_by(b_r, date) %>% 
   na.omit() %>% 
   dplyr::summarise(daily.max.t = max(temp),
@@ -192,7 +202,7 @@ ts_mcar_meandaily <- ts_mcar_daily %>%
                    daily.mean.mint = mean(daily.min.t),
                    daily.mean.mins = mean(daily.min.s))
 
-ts_mcar_overall <- E_mcar %>% 
+ts_mcar_overall <- E_mcar_imp %>% 
   group_by(b_r) %>%
   na.omit() %>% 
   dplyr::summarise(average.temp = mean(temp),
@@ -206,7 +216,14 @@ ts_mcar <-  ts_mcar_meandaily %>%
 
 ## ts imputation mar
 
-ts_mar_daily <- E_mar %>% 
+E_mar_imp$time <- as.POSIXct(E_mar_imp$date_time*24*3600 + as.POSIXct("1899-12-29 23:00") )
+
+E_mar_imp <- E_mar_imp %>% 
+  mutate(hour = as.POSIXlt(time)$hour) %>% 
+  separate(col = "time", into = c("date","clocktime"),sep=" ", remove = TRUE) %>% 
+  dplyr::select(-clocktime, -date_time)
+
+ts_mar_daily <- E_mar_imp %>% 
   group_by(b_r, date) %>% 
   dplyr::summarise(daily.max.t = max(temp),
                    daily.min.t = min(temp),
@@ -218,7 +235,7 @@ ts_mar_meandaily <- ts_mar_daily %>%
                    daily.mean.mint = mean(daily.min.t),
                    daily.mean.mins = mean(daily.min.s))
 
-ts_mar_overall <- E_mar %>% 
+ts_mar_overall <- E_mar_imp %>% 
   group_by(b_r) %>%
   na.omit() %>% 
   dplyr::summarise(average.temp = mean(temp),
@@ -232,7 +249,14 @@ ts_mar <-  ts_mar_meandaily %>%
 
 ## ts mnar
 
-ts_mnar_daily <- E_mnar %>% 
+E_mnar_imp$time <- as.POSIXct(E_mnar_imp$date_time*24*3600 + as.POSIXct("1899-12-29 23:00") )
+
+E_mnar_imp <- E_mnar_imp %>% 
+  mutate(hour = as.POSIXlt(time)$hour) %>% 
+  separate(col = "time", into = c("date","clocktime"),sep=" ", remove = TRUE) %>% 
+  dplyr::select(-clocktime, -date_time)
+
+ts_mnar_daily <- E_mnar_imp %>% 
   group_by(b_r, date) %>% 
   dplyr::summarise(daily.max.t = max(temp),
                    daily.min.t = min(temp),
@@ -244,7 +268,7 @@ ts_mnar_meandaily <- ts_mnar_daily %>%
                    daily.mean.mint = mean(daily.min.t),
                    daily.mean.mins = mean(daily.min.s))
 
-ts_mnar_overall <- E_mnar %>% 
+ts_mnar_overall <- E_mnar_imp %>% 
   group_by(b_r) %>%
   na.omit() %>% 
   dplyr::summarise(average.temp = mean(temp),
@@ -462,7 +486,4 @@ full_summary <- true_values %>%
   full_join(mice_summaries) %>% 
   full_join(cca_summaries)
 
-
-full_summary
-
-write.csv(full_summary, "imputation_method_test_results.csv")
+write.csv(full_summary, "../data/imputation_method_test_results.csv")
