@@ -22,10 +22,13 @@ oysters_full <- growth_rate %>%
   mutate(subsite = paste(site, b_r))
 
 # growth rate changes non-linearly with time
-plot(growth_rate ~ outplant_time, data = oysters_full)
+par(mar=c(4.5,4.4,2,2))
+plot(growth_rate ~ outplant_time, data = oysters_full, ylab = "Growth rate (mm/week)",
+     xlab = "Time since experiment start (weeks)", cex.lab = 1.5)
 
 # but can transform it to fix
-plot(growth_rate ~ exp(-1/outplant_time), data = oysters_full)
+plot(growth_rate ~ exp(-1/outplant_time), data = oysters_full, ylab = "Growth rate (mm/week)",
+     xlab = "Time since experiment start (weeks)", cex.lab = 1.5)
 
 # create rescaled dataframe
 oysters_rescaled <- oysters_full %>% 
@@ -47,6 +50,8 @@ lm_oysters_r <- lm(growth_rate ~ temp_av + sal_av + av_dmax_t +
                    data = just_rafts)
 plot(lm_oysters_r)
 summary(lm_oysters_r)
+
+vcov(lm_oysters_r)
 
 or_res <- residuals(lm_oysters_r, type = "pearson")
 acf(or_res)

@@ -170,8 +170,8 @@ Xl_s <- mayf_Xl %>%
 Xl_s$month <- as.factor(Xl_s$month)
 
 
-Xl_full <- Xl_s %>% 
-  full_join(growth_rate)
+Xl_full <- growth_rate %>% 
+  full_join(Xl_s)
 
 Xl_rs <- Xl_full %>% 
   mutate(outplant_time = exp(-1/outplant_time)*10,
@@ -198,7 +198,6 @@ model_r <- with(mids_r, lm(growth_rate ~ temp_av + sal_av + av_dmax_t +
 mice_beach <- pool(model_b)
 mice_raft <- pool(model_r)
 
-
 write.table(summary(mice_beach), file = "../data/miceb.txt", quote = FALSE, sep = "\t", row.names = TRUE)
 write.table(summary(mice_raft), file = "../data/micer.txt", quote = FALSE, sep = "\t", row.names = TRUE)
 write.table(summary(M.ts.b)$coefficients, file = "../data/tsb.txt", quote = FALSE, sep = "\t", row.names = TRUE)
@@ -209,3 +208,17 @@ write.table(summary(lm_oysters_r)$coefficients, file = "../data/ccar.txt", quote
 
 write.table(julyf_Xl, "../data/mice_st.txt", quote = FALSE, sep = "\t", row.names = FALSE)
 
+
+## just an ANOVA
+install.packages('miceadds')
+library(miceadds)
+
+mi.anova(mids_b, formula = "growth_rate ~ temp_av + sal_av + av_dmax_t +
+                             av_dmin_t + tot_dh_t + tot_dh_s +
+                             outplant_time")
+
+mi.anova(mids_r, formula = "growth_rate ~ temp_av + sal_av + av_dmax_t +
+                             av_dmin_t + tot_dh_t + tot_dh_s +
+         outplant_time")
+
+# everything is significant??
